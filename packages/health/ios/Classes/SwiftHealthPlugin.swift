@@ -63,6 +63,9 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
     let ELECTROCARDIOGRAM = "ELECTROCARDIOGRAM"
     let NUTRITION = "NUTRITION"
     
+    let BASAL_BODY_TEMPERATURE = "BASAL_BODY_TEMPERATURE"
+    let MENSTRUAL_FLOW = "MENSTRUAL_FLOW"
+    
     // Health Unit types
     // MOLE_UNIT_WITH_MOLAR_MASS, // requires molar mass input - not supported yet
     // MOLE_UNIT_WITH_PREFIX_MOLAR_MASS, // requires molar mass & prefix input - not supported yet
@@ -172,7 +175,12 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
         else if call.method.elementsEqual("writeWorkoutData") {
             try! writeWorkoutData(call: call, result: result)
         }
-        
+
+        // Handle writeMenstrualFlow
+        else if call.method.elementsEqual("writeMenstrualFlow") {
+          try! writeMenstrualFlow(call: call, result: result)
+        }
+
         /// Handle hasPermission
         else if call.method.elementsEqual("hasPermissions") {
             try! hasPermissions(call: call, result: result)
@@ -520,7 +528,55 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
                 }
             })
     }
-    
+
+    func writeMenstrualFlow(call: FlutterMethodCall, result: @escaping FlutterResult) throws {
+        let type = HKSampleType.categoryType(forIdentifier: .menstrualFlow)!
+
+        guard let argumentsList = call.arguments as? [NSDictionary] else {
+            throw PluginError(message: "Invalid Arguments - arguments should be a list of dictionaries")
+        }
+
+        var samples = [HKCategorySample]()
+
+        for arguments in argumentsList {
+            guard let flowValue = (arguments["flow"] as? Int),
+                let time = (arguments["time"] as? NSNumber),
+                let startOfCycle = (arguments["is_start_of_cycle"] as? Bool),
+                let selfReported = (arguments["self_reported"] as? Bool)
+            else {
+            throw PluginError(message: "Invalid Arguments in a dictionary")
+            }
+
+            if flowValue < 0 || flowValue > 4 {
+            throw PluginError(message: "Invalid Arguments - flow \(flowValue) is not a valid value")
+            }
+            let datetime = Date(timeIntervalSince1970: time.doubleValue / 1000)
+            let sample = HKCategorySample(
+            type: type,
+            value: Int(flowValue + 1),
+            start: datetime,
+            end: datetime,
+            metadata: [
+                HKMetadataKeyMenstrualCycleStart: startOfCycle ? 1 : 0,
+                HKMetadataKeyWasUserEntered: selfReported ? 1 : 0
+            ]
+            )
+            samples.append(sample)
+        }
+
+        HKHealthStore().save(
+            samples,
+            withCompletion: { (success, error) in
+                if let err = error {
+                print("Error Saving \(type) Samples: \(err.localizedDescription)")
+                }
+                DispatchQueue.main.async {
+                result(success)
+                }
+            }
+        )
+    }
+
     func delete(call: FlutterMethodCall, result: @escaping FlutterResult) {
         let arguments = call.arguments as? NSDictionary
         let dataTypeKey = (arguments?["dataTypeKey"] as? String)!
@@ -638,6 +694,18 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
                     samplesCategory = samplesCategory.filter { $0.value == 4 }
                 }
                 let categories = samplesCategory.map { sample -> NSDictionary in
+                    if dataTypeKey == self.MENSTRUAL_FLOW {
+                        return [
+                          "uuid": "\(sample.uuid)",
+                          "value": sample.value,
+                          "date_from": Int(sample.startDate.timeIntervalSince1970 * 1000),
+                          "date_to": Int(sample.endDate.timeIntervalSince1970 * 1000),
+                          "source_id": sample.sourceRevision.source.bundleIdentifier,
+                          "source_name": sample.sourceRevision.source.name,
+                          "is_start_of_cycle":  sample.metadata?[HKMetadataKeyMenstrualCycleStart] as? Bool ?? false,
+                        ]
+                    }
+
                     return [
                         "uuid": "\(sample.uuid)",
                         "value": sample.value,
@@ -1013,6 +1081,7 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
                 forIdentifier: .bodyFatPercentage)!
             dataTypesDict[BODY_MASS_INDEX] = HKSampleType.quantityType(forIdentifier: .bodyMassIndex)!
             dataTypesDict[BODY_TEMPERATURE] = HKSampleType.quantityType(forIdentifier: .bodyTemperature)!
+            dataTypesDict[BASAL_BODY_TEMPERATURE] = HKSampleType.quantityType(forIdentifier: .basalBodyTemperature)!
             dataTypesDict[DIETARY_CARBS_CONSUMED] = HKSampleType.quantityType(
                 forIdentifier: .dietaryCarbohydrates)!
             dataTypesDict[DIETARY_ENERGY_CONSUMED] = HKSampleType.quantityType(
@@ -1053,6 +1122,8 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
             dataTypesDict[NUTRITION] = HKSampleType.correlationType(
                 forIdentifier: .food)!
             
+            dataTypesDict[MENSTRUAL_FLOW] = HKSampleType.categoryType(forIdentifier: .menstrualFlow)!
+
             healthDataTypes = Array(dataTypesDict.values)
         }
         // Set up heart rate data types specific to the apple watch, requires iOS 12

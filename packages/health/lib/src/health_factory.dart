@@ -541,6 +541,8 @@ class HealthFactory {
         value = ElectrocardiogramHealthValue.fromJson(e);
       } else if (dataType == HealthDataType.NUTRITION) {
         value = NutritionHealthValue.fromJson(e);
+      } else if (dataType == HealthDataType.MENSTRUAL_FLOW) {
+        value = MenstrualFlowHealthValue.fromJson(e);
       } else {
         value = NumericHealthValue(e['value']);
       }
@@ -658,6 +660,27 @@ class HealthFactory {
       'totalDistanceUnit': totalDistanceUnit.name,
     };
     final success = await _channel.invokeMethod('writeWorkoutData', args);
+    return success ?? false;
+  }
+
+  /// Saves menstrual flow record into Apple Health. Google Fit does not support this measure
+  ///
+  /// Returns true if successful, false otherwise.
+  ///
+  /// Parameters:
+  /// * [value] - the flow value
+  /// * [datetime] - the time when this [value] is measured.
+  ///   + It must be equal to or earlier than [endTime].
+  /// * [isStartOfCycle] - indicates whether or not this measurement is done on the first day of the menstrual cycle.
+  Future<bool> writeMenstrualFlow(
+    Iterable<MenstrualFlowHealthValue> flows,
+  ) async {
+    if (_platformType != PlatformType.IOS)
+      throw ArgumentError("MenstrualFlow is only supported in HealthKit");
+
+    final args = flows.map((e) => e.toJson()).toList();
+
+    bool? success = await _channel.invokeMethod('writeMenstrualFlow', args);
     return success ?? false;
   }
 

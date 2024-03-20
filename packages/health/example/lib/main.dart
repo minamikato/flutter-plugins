@@ -166,6 +166,15 @@ class _HealthAppState extends State<HealthApp> {
         0.0, HealthDataType.SLEEP_DEEP, earlier, now);
     success &= await health.writeMeal(
         earlier, now, 1000, 50, 25, 50, "Banana", MealType.SNACK);
+    success &= await health.writeHealthData(
+        37.25, HealthDataType.BASAL_BODY_TEMPERATURE, earlier, now);
+    success &= await health.writeMenstrualFlow([
+      MenstrualFlowHealthValue(
+          flowValue: MenstrualFlow.medium,
+          isStartOfCycle: true,
+          datetime: now,
+          selfReported: true)
+    ]);
     // Store an Audiogram
     // Uncomment these on iOS - only available on iOS
     // const frequencies = [125.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0];

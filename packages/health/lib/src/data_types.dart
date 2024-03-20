@@ -50,6 +50,9 @@ enum HealthDataType {
   HEADACHE_UNSPECIFIED,
   NUTRITION,
 
+  BASAL_BODY_TEMPERATURE,
+  MENSTRUAL_FLOW,
+
   // Heart Rate events (specific to Apple Watch)
   HIGH_HEART_RATE_EVENT,
   LOW_HEART_RATE_EVENT,
@@ -77,6 +80,7 @@ const List<HealthDataType> _dataTypeKeysIOS = [
   HealthDataType.BODY_FAT_PERCENTAGE,
   HealthDataType.BODY_MASS_INDEX,
   HealthDataType.BODY_TEMPERATURE,
+  HealthDataType.BASAL_BODY_TEMPERATURE,
   HealthDataType.DIETARY_CARBS_CONSUMED,
   HealthDataType.DIETARY_ENERGY_CONSUMED,
   HealthDataType.DIETARY_FATS_CONSUMED,
@@ -114,6 +118,7 @@ const List<HealthDataType> _dataTypeKeysIOS = [
   HealthDataType.HEADACHE_UNSPECIFIED,
   HealthDataType.ELECTROCARDIOGRAM,
   HealthDataType.NUTRITION,
+  HealthDataType.MENSTRUAL_FLOW,
 ];
 
 /// List of data types available on Android
@@ -126,6 +131,7 @@ const List<HealthDataType> _dataTypeKeysAndroid = [
   HealthDataType.BODY_FAT_PERCENTAGE,
   HealthDataType.BODY_MASS_INDEX,
   HealthDataType.BODY_TEMPERATURE,
+  HealthDataType.BASAL_BODY_TEMPERATURE,
   HealthDataType.HEART_RATE,
   HealthDataType.HEIGHT,
   HealthDataType.STEPS,
@@ -146,6 +152,7 @@ const List<HealthDataType> _dataTypeKeysAndroid = [
   HealthDataType.BASAL_ENERGY_BURNED,
   HealthDataType.RESPIRATORY_RATE,
   HealthDataType.NUTRITION,
+  HealthDataType.MENSTRUAL_FLOW,
 ];
 
 /// Maps a [HealthDataType] to a [HealthDataUnit].
@@ -160,6 +167,7 @@ const Map<HealthDataType, HealthDataUnit> _dataTypeToUnit = {
   HealthDataType.BODY_FAT_PERCENTAGE: HealthDataUnit.PERCENT,
   HealthDataType.BODY_MASS_INDEX: HealthDataUnit.NO_UNIT,
   HealthDataType.BODY_TEMPERATURE: HealthDataUnit.DEGREE_CELSIUS,
+  HealthDataType.BASAL_BODY_TEMPERATURE: HealthDataUnit.DEGREE_CELSIUS,
   HealthDataType.DIETARY_CARBS_CONSUMED: HealthDataUnit.GRAM,
   HealthDataType.DIETARY_ENERGY_CONSUMED: HealthDataUnit.KILOCALORIE,
   HealthDataType.DIETARY_FATS_CONSUMED: HealthDataUnit.GRAM,
@@ -208,6 +216,8 @@ const Map<HealthDataType, HealthDataUnit> _dataTypeToUnit = {
   HealthDataType.ELECTROCARDIOGRAM: HealthDataUnit.VOLT,
 
   HealthDataType.NUTRITION: HealthDataUnit.NO_UNIT,
+
+  HealthDataType.MENSTRUAL_FLOW: HealthDataUnit.NO_UNIT
 };
 
 const PlatformTypeJsonValue = {
